@@ -25,26 +25,31 @@ var userSchema = new mongoose.Schema({
     password:{
         type:String,
         required:true,
+        select:false
     },
     cart:{
         type:Array,
         default:[],
     },
     address:[{
-        type:mongoose.Types.ObjectId,
+        type:mongoose.Schema.Types.ObjectId,
         ref:"Address"
     }],
     wishlist:[{
-        type:mongoose.Types.ObjectId,
+        type:mongoose.Schema.Types.ObjectId,
         ref:"Product",
     }], 
+    refreshToken:{
+        type:String,
+    },
     isBlocked:{
         type:Boolean,
         default:false
     },
     isAdmin:{
         type:Boolean,
-        default:false
+        default:false,
+        select:false
     }
 },{timestamps:true});
 
@@ -58,7 +63,11 @@ userSchema.methods.comparePassword = async function(candidatePassword){
 }
 
 userSchema.methods.createJWT = function(){
-    return jwt.sign({userId:this._id,name:this.firstName},process.env.JWT_SECRET,{expiresIn:process.env.JWT_LIFETIME})
+    return jwt.sign({userId:this._id,name:this.firstName},process.env.JWT_SECRET,{expiresIn:"1d"})
+}
+
+userSchema.methods.refreshJWT = function(){
+    return jwt.sign({userId:this._id,name:this.firstName},process.env.JWT_SECRET,{expiresIn:"3d"})
 }
 
 //Export the model
