@@ -25,7 +25,6 @@ var userSchema = new mongoose.Schema({
     password:{
         type:String,
         required:true,
-        select:false
     },
     cart:{
         type:Array,
@@ -48,8 +47,7 @@ var userSchema = new mongoose.Schema({
     },
     isAdmin:{
         type:Boolean,
-        default:false,
-        select:false
+        default:false
     }
 },{timestamps:true});
 
