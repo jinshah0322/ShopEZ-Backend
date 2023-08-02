@@ -48,22 +48,10 @@ var userSchema = new mongoose.Schema({
     isAdmin:{
         type:Boolean,
         default:false
-    },
-    passwordChangedAt:{
-        type:Date
-    },
-    passwordResetToken:{
-        type:String
-    },
-    passwordResetExpires:{
-        type:Date
     }
 },{timestamps:true});
 
 userSchema.pre("save",async function(){
-    if(!this.isModified(password)){
-        next()
-    }
     const salt = await bcrypt.genSalt(10)
     this.password = await bcrypt.hash(this.password,salt)
 })
@@ -78,13 +66,6 @@ userSchema.methods.createJWT = function(){
 
 userSchema.methods.refreshJWT = function(){
     return jwt.sign({userId:this._id,name:this.firstName},process.env.JWT_SECRET,{expiresIn:"3d"})
-}
-
-userSchema.methods.createPasswordResetToken = async function(){
-    const resetToken = crypto.randomBytes(3).toString("hex")
-    this.passwordResetToken = crypto.createHash("sha256").update(resetToken).digest("hex")
-    this.passwordResetExpires = Date.now()+10*60*1000
-    return resetToken
 }
 
 //Export the model
