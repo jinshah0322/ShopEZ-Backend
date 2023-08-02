@@ -1,6 +1,9 @@
 require("express-async-errors")
 const User = require("../models/userModel")
 const customAPIError = require("../errors/custom-error")
+const mongoose = require("mongoose")
+const sendEmail = require("./emailCtrl")
+const crypto = require("crypto")
 
 const createUser = async (req,res)=>{
     const user = await User.create(req.body)
@@ -88,7 +91,7 @@ const refreshToken = async (req,res)=>{
     }
     const updateToken = user.createJWT()
     const updateRefreshToken = user.refreshJWT()
-    res.cookie("refreshToken",updateRefreshToken,{
+    res.cookie("refreshToken",updateRefreshToken,{  
         httpOnly:true,
         maxAge:24*60*60*1000
     })
@@ -96,15 +99,66 @@ const refreshToken = async (req,res)=>{
     res.status(200).send({token:updateToken,refreshToken:updateRefreshToken,success:true})
 }
 
+const updatePassword = async(req,res)=>{
+    const {oldPassword,newPassword} = req.body
+    const userId = new mongoose.Types.ObjectId(req.user.userId)
+    const user = await User.findById(userId)
+    if(await user.comparePassword(oldPassword)){
+        user.password = newPassword
+        const updatePassword = await user.save()
+        res.status(200).send({user:user,msg:"Password Updated successfully",success:true})
+    } else{
+        throw new customAPIError("Please enter correct password",401)
+    }
+}
+
+const forgotPasswordToken = async(req,res)=>{
+    const user = await User.findOne({email:req.body.email})
+    if(!user){
+        throw new customAPIError("User not found",404)
+    }
+    const token = await user.createPasswordResetToken()
+    await user.save()
+    const resetURL = `Hi, Please follow this link to reset Your Password. This link is valid till 10 minutes from now. <a href='http://localhost:5000/api/user/resetPassword/${token}'>Click Here</>`;
+    const data = {
+        to: req.body.email,
+        text: "Hey User",
+        subject: "Forgot Password Link",
+        html: resetURL,
+    };
+    sendEmail(data)
+    res.status(200).send({user,success:true})
+}
+
+const resetPassword = async (req,res)=>{
+    const {password} = req.body
+    const {token} = req.params
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    const user = await User.findOne({
+        passwordResetToken: hashedToken,
+        passwordResetExpires: { $gt: Date.now() }
+    })
+    if(!user){
+        throw new customAPIError("User not found",404)
+    }
+    user.password = password
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+    res.status(200).send({user,success:true})
+}
+
 const logout = async (req,res)=>{
+    console.log("here");
     const refreshToken = req.cookies.refreshToken
+    console.log(refreshToken);
     const user = await User.findOne({refreshToken})
     if(!user){
         res.clearCookie("refreshToken",{
             httpOnly:true,
             secure:true
         })
-        throw new customAPIError("User not found",404)
+        throw new customAPIError("Token is expired",401)
     }
     res.clearCookie("refreshToken",{
         httpOnly:true,
@@ -124,5 +178,8 @@ module.exports = {
     blockUser,
     unblockUser,
     refreshToken,
-    logout
+    logout,
+    updatePassword,
+    forgotPasswordToken,
+    resetPassword
 }

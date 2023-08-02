@@ -4,7 +4,7 @@ const {createProduct,getAllProducts,getProduct,updateProduct,deleteProduct} = re
 const authMiddleware = require("../middlewares/authentication")
 const isAdmin = require("../middlewares/isAdmin")
 
-router.route("/").post(authMiddleware,isAdmin,createProduct).get(authMiddleware,getAllProducts)
-router.route("/:id").get(authMiddleware,isAdmin,getProduct).patch(authMiddleware,isAdmin,updateProduct).delete(authMiddleware,isAdmin,deleteProduct)
+router.route("/").post(authMiddleware,isAdmin,createProduct).get(getAllProducts)
+router.route("/:id").get(getProduct).patch(authMiddleware,isAdmin,updateProduct).delete(authMiddleware,isAdmin,deleteProduct)
 
 module.exports = router

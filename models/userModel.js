@@ -1,6 +1,7 @@
 const mongoose = require('mongoose'); 
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
+const crypto = require("crypto")
 
 // Declare the Schema of the Mongo model
 var userSchema = new mongoose.Schema({
@@ -48,10 +49,16 @@ var userSchema = new mongoose.Schema({
     isAdmin:{
         type:Boolean,
         default:false
-    }
+    },
+    passwordChangedAt:Date,
+    passwordResetToken:String,
+    passwordResetExpires:Date
 },{timestamps:true});
 
 userSchema.pre("save",async function(){
+    // if(!this.isModified("password")){
+    //     next()
+    // }
     const salt = await bcrypt.genSalt(10)
     this.password = await bcrypt.hash(this.password,salt)
 })
@@ -66,6 +73,16 @@ userSchema.methods.createJWT = function(){
 
 userSchema.methods.refreshJWT = function(){
     return jwt.sign({userId:this._id,name:this.firstName},process.env.JWT_SECRET,{expiresIn:"3d"})
+}
+
+userSchema.methods.createPasswordResetToken = async function(){
+    const resettoken = crypto.randomBytes(32).toString("hex");
+    this.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resettoken)
+    .digest("hex");
+    this.passwordResetExpires = Date.now() + 30 * 60 * 1000;  //Expires in 30 minutes
+    return resettoken
 }
 
 //Export the model

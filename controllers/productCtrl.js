@@ -32,7 +32,6 @@ const getAllProducts = async (req,res)=>{
         let filter = numericFilter.replace(regex,(match)=>{
             return `-${operatorMap[match]}-`
         })
-        console.log(filter);
         const options = ["price","quantity","sold"]
         filter = filter.split(',').forEach((item)=>{
             const [field, operator, value] = item.split('-') 
