@@ -7,6 +7,13 @@ const crypto = require("crypto")
 
 const createUser = async (req,res)=>{
     const user = await User.create(req.body)
+    const data = {
+        to: req.body.email,
+        subject: "Welcome to ShopEZ",
+        text: "Hey User",
+        html: "<h3>Congrulations You have successfully registered to ShopEz</h3>",
+    };
+    sendEmail(data)
     res.status(200).send({user,success:true})
 }
 
