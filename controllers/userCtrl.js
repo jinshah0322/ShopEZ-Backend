@@ -9,8 +9,8 @@ const createUser = async (req,res)=>{
     const user = await User.create(req.body)
     const data = {
         to: req.body.email,
+        text: `Hey ${req.body.firstName+" "+req.body.lastnName}`,
         subject: "Welcome to ShopEZ",
-        text: "Hey User",
         html: "<h3>Congrulations You have successfully registered to ShopEz</h3>",
     };
     sendEmail(data)
