@@ -4,9 +4,10 @@ const dbConnect = require("./db/dbConnect")
 const notFound = require("./middlewares/notFound")
 const errorHandler = require("./middlewares/errorHandler")
 const cookieParser = require("cookie-parser")
+const morgan = require("morgan")
 const authRoutes = require("./routes/authRoutes")
 const productRoutes = require('./routes/productRoute')
-const morgan = require("morgan")
+const blogRoutes = require("./routes/blogRoutes")
 
 const app = express()
 
@@ -16,6 +17,7 @@ app.use(morgan("dev"))
 
 app.use("/api/v1/user",authRoutes)
 app.use("/api/v1/product",productRoutes)
+app.use("/api/v1/blog",blogRoutes)
 
 app.use(notFound)
 app.use(errorHandler)
